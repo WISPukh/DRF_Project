@@ -1,0 +1,6 @@
+!/.env
+!/venv/
+!/static/
+!/media/
+/.idea/
+/.env
