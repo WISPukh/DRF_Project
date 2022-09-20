@@ -1,0 +1,24 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans 'Products by category' %}{% endblock %}
+{% block content %}
+    {% if products_list %}
+        <h1 class="center">{% trans 'Products by category' %}</h1>
+        <div class="items">
+            {% for product in products_list %}
+                <div class="item">
+                    <a href="{{ product.get_absolute_url }}">
+                        <img src="{{ MEDIA_URL }}{{ product.img }}" alt="what do you think it is? {{ product.name }}.">
+                        <h2>{{ product.name.title }}</h2>
+                    </a>
+                    <p>{% trans 'Description' %}: {{ product.description.capitalize }}</p>
+                    <p>{% trans 'Price' %}: {{ product.price }}</p>
+                    <p>{% trans 'In stock' %}: {{ product.in_stock }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>{% trans 'There are no products of this category in stock' %}</p>
+    {% endif %}
+{% endblock %}
