@@ -1,4 +1,3 @@
-from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.viewsets import ModelViewSet
 
@@ -11,6 +10,5 @@ class UsersViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    @action(detail=True, methods=['PUT'])
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
