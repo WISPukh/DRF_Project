@@ -1,0 +1,26 @@
+{% extends 'shop/base.html' %}
+{% load i18n %}
+{% block title %}{% trans 'Your orders' %}{% endblock %}
+{% block content %}
+    <h1 STYLE="margin: auto">{% trans 'Here are Your orders and their content' %}</h1>
+    {% if orders %}
+        {% for order in orders %}
+            <h3 style="margin: auto">{% trans 'Order number' %}: {{ forloop.counter }}</h3>
+            <div class="items" style="margin: auto">
+                {% with items=order.items %}
+                    {% for item in items %}
+                        <p>{% trans 'Product name' %}: {{ item.product_name }}</p>
+                        <p>{% trans 'Price' %}: {{ item.product_id__price }}</p>
+                        <p>{% trans 'Quantity' %}: {{ item.quantity }}</p>
+                        <p>{% trans 'Price for specific product' %}: {{ item.total_cost_per_item }}</p>
+                    {% endfor %}
+                {% endwith %}
+                <p>{% trans 'City' %}: {{ order.city }}</p>
+                <p>{% trans 'Address' %}: {{ order.address }}</p>
+                <p>{% trans 'Order price' %}: {{ order.total_price }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>{% trans "You haven't made any orders yet" %}</p>
+    {% endif %}
+{% endblock %}
