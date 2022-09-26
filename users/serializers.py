@@ -4,8 +4,8 @@ from .models import User
 
 class UserSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    email = serializers.EmailField(read_only=True)
-    password = serializers.CharField(read_only=True)
+    email = serializers.EmailField()
+    password = serializers.CharField()
     is_superuser = serializers.BooleanField(required=False)
     is_staff = serializers.BooleanField(required=False)
     is_active = serializers.BooleanField(required=False)
@@ -14,8 +14,8 @@ class UserSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return User.objects.create_user(
-            email=self.initial_data['email'],
-            password=self.initial_data['password']
+            email=self.validated_data['email'],
+            password=self.validated_data['password']
         )
 
     def update(self, instance, validated_data):

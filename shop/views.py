@@ -21,7 +21,7 @@ class ProductViewSet(ModelViewSet):
                 return generate_json_error_response(HTTP_400_BAD_REQUEST, 'Incorrect category')
             content = ContentType.objects.get(model=category).model_class().objects.all()
             return Response(self.serializer_class(content, many=True).data)
-        return Response(self.serializer_class(self.queryset, many=True).data)
+        return Response(self.serializer_class(self.get_queryset(), many=True).data)
 
     def retrieve(self, request, *args, **kwargs):
         dynamic_model = ContentType.objects.get(pk=self.get_object().content_type_id).model_class()
