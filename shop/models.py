@@ -8,10 +8,9 @@ from users.models import User
 
 class Product(models.Model):
     name = models.CharField(_('Product name'), max_length=50)
-    description = models.CharField(max_length=250, verbose_name=_('Description'))
-    price = models.IntegerField(default=0, verbose_name=_('Price'))
-    in_stock = models.IntegerField(default=0, verbose_name=_('In stock'))
-    category = models.ManyToManyField('Category')
+    description = models.CharField(blank=True, max_length=250, verbose_name=_('Description'))
+    price = models.IntegerField(verbose_name=_('Price'))
+    in_stock = models.IntegerField(verbose_name=_('In stock'))
     img = models.ImageField(upload_to='uploads/')
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, default=50)
 

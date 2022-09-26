@@ -1,51 +1,55 @@
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import get_object_or_404
-from django.shortcuts import render
-from django.views.generic import ListView, DetailView
+from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
-from cart.forms import CartAddProductForm
-from .models import Category, Product
-
-
-def index(request):
-    return render(request, 'shop/home.html')
+from .models import Product
+from .serializers import ProductSerializer
+from .utils import generate_json_error_response, get_dynamic_serializer
 
 
-def about(request):
-    return render(request, 'shop/about.html')
-
-
-def reviews(request):
-    return render(request, 'shop/reviews.html')
-
-
-class CatalogView(ListView):
-    model = Category
-    ordering = 'id'
-    template_name = 'shop/catalog.html'
-    context_object_name = 'catalog_list'
-
-
-class ProductByCategoryView(ListView):
-    model = Product
-    context_object_name = 'products_list'
-    template_name = 'shop/products_by_category.html'
+class ProductViewSet(ModelViewSet):
+    serializer_class = ProductSerializer
 
     def get_queryset(self):
-        return Product.objects.filter(category__name=self.kwargs.get('category_name'))
+        self.queryset = Product.objects.all().order_by('pk')
+        return self.queryset
 
+    def list(self, request, *args, **kwargs):
+        if category := request.query_params.get('category'):
+            if not ContentType.objects.filter(model=category).exists():
+                return generate_json_error_response(HTTP_400_BAD_REQUEST, 'Incorrect category')
+            content = ContentType.objects.get(model=category).model_class().objects.all()
+            return Response(self.serializer_class(content, many=True).data)
+        return Response(self.serializer_class(self.queryset, many=True).data)
 
-class ProductDetailView(DetailView):
-    context_object_name = 'product_detail'
-    template_name = 'shop/product_detail.html'
+    def retrieve(self, request, *args, **kwargs):
+        dynamic_model = ContentType.objects.get(pk=self.get_object().content_type_id).model_class()
+        dynamic_serializer = get_dynamic_serializer(dynamic_model)
+        instance = dynamic_model.objects.get(pk=kwargs.get('pk'))
+        return Response(dynamic_serializer(instance).data)
 
-    def get_queryset(self):
-        current_item = get_object_or_404(Product, pk=self.kwargs.get('pk'))
-        content_type = ContentType.model_class(current_item.content_type)
-        return content_type.objects.all()
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return generate_json_error_response(HTTP_403_FORBIDDEN, 'You have no access to this functionality')
 
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super(ProductDetailView, self).get_context_data()
-        cart_product_form = CartAddProductForm()
-        context['cart_form'] = cart_product_form
-        return context
+        model = ContentType.objects.get(pk=request.data.get('content_type')).model_class()
+        dynamic_serializer = get_dynamic_serializer(model)
+
+        serializer = dynamic_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(serializer.data, status=HTTP_201_CREATED, headers=headers)
+
+    def partial_update(self, request, *args, **kwargs):
+        model = ContentType.objects.get(pk=self.get_object().content_type_id).model_class()
+        dynamic_serializer = get_dynamic_serializer(model)
+
+        instance = model.objects.get(pk=kwargs.get('pk'))
+        serializer = dynamic_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)

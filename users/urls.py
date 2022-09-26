@@ -29,7 +29,6 @@ from .views import UsersViewSet
 #     path('reset/done/', PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 # ]
 router = DefaultRouter()
-# router.register('registration/', UserRegistration, basename='create_user')
 router.register(r'', UsersViewSet)
 router.register(r'', ProfileDetailViewSet, basename='profile_detail')
 
