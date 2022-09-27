@@ -1,8 +1,12 @@
 from django.contrib.contenttypes.models import ContentType
-from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
+from django.db.models import F
+from django.db.transaction import atomic
 from rest_framework.response import Response
+from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.viewsets import ModelViewSet
 
+from cart.models import Order, OrderItem
+from cart.serializers import OrderSerializer, OrderItemSerializer
 from .models import Product
 from .serializers import ProductSerializer
 from .utils import generate_json_error_response, get_dynamic_serializer
@@ -53,3 +57,50 @@ class ProductViewSet(ModelViewSet):
         self.perform_update(serializer)
 
         return Response(serializer.data)
+
+
+class AddToCartViewSet(ModelViewSet):
+    serializer_class = OrderItemSerializer
+
+    def get_queryset(self):
+        return Product.objects.filter(pk=self.kwargs['pk'])
+
+    @atomic
+    def create(self, request, *args, **kwargs):
+        product = self.get_object()
+        user_pk = request.user.pk
+        quantity = int(request.data['quantity'])
+
+        order, is_order_created = Order.objects.get_or_create(
+            customer_id_id=user_pk,
+            status='CART'
+        )
+        order.product.add(product)
+
+        snapshot_item, is_snapshot_created = OrderItem.objects.get_or_create(
+            customer_id_id=user_pk,
+            unit_price=product.price,
+            product_id=product,
+            order_id=order
+        )
+
+        if is_order_created and is_snapshot_created:
+            order.quantity = quantity
+            snapshot_item.quantity = quantity
+        else:
+            order.quantity = F('quantity') + quantity
+            snapshot_item.quantity = F('quantity') + quantity
+
+        snapshot_item.save()
+
+        items_in_cart = OrderItem.objects.filter(
+                customer_id=user_pk,
+                order_id=order.pk
+            )
+        total_price = sum(
+            [item.quantity * item.unit_price for item in items_in_cart]
+        )
+        order.total_price = total_price
+        order.save()
+        order.refresh_from_db()
+        return Response(OrderSerializer(order).data)

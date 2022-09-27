@@ -34,8 +34,8 @@ class Order(models.Model):
     total_price = models.IntegerField(default=0, verbose_name=_('Order price'))
     product = models.ManyToManyField(Product)
     quantity = models.IntegerField(default=0, verbose_name=_('Quantity'))
-    city = models.CharField(max_length=80, verbose_name=_('City'), default='')
-    address = models.CharField(max_length=150, verbose_name=_('Address'), default='')
+    city = models.CharField(max_length=80, verbose_name=_('City'), default=None, null=True)
+    address = models.CharField(max_length=150, verbose_name=_('Address'), default=None, null=True)
     status = models.CharField(max_length=13, choices=OrderStatus.choices, default=OrderStatus.CART)
 
     class Meta:

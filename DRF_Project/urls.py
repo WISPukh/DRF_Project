@@ -6,6 +6,8 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 
+from cart.urls import cart, orders
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # authorization via token
@@ -14,5 +16,7 @@ urlpatterns = [
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
     path('api/users/', include('users.urls')),
-    path('api/shop/', include('shop.urls'))
+    path('api/products/', include('shop.urls')),
+    path('api/orders/history/', include(orders.urls)),
+    path('api/cart/', include(cart.urls))
 ]
