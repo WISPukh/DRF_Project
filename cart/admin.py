@@ -3,7 +3,6 @@ from django.contrib.admin import (
     ModelAdmin,
     TabularInline,
     register,
-    display,
     action,
 )
 
@@ -22,12 +21,11 @@ class AdminManageOrder(ModelAdmin):
     list_display = (
         '__str__',
         'customer_id',
-        'quantity',
+        'total_amount',
         'total_price',
         'status',
         'city',
         'address',
-        'show_full_address',
     )
     list_editable = ('status',)
     ordering = ('id',)
@@ -36,10 +34,6 @@ class AdminManageOrder(ModelAdmin):
     inlines = [
         OrderItemsInline,
     ]
-
-    @display(description=_('Full address'))
-    def show_full_address(self, obj):
-        return ', '.join([obj.city, obj.address])
 
     @action(description=_('Mark delivered'))
     def change_status(self, request, queryset):  # noqa

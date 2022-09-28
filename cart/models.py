@@ -32,8 +32,8 @@ class OrderItem(models.Model):
 class Order(models.Model):
     customer_id = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('Customer'))
     total_price = models.IntegerField(default=0, verbose_name=_('Order price'))
-    product = models.ManyToManyField(Product)
-    quantity = models.IntegerField(default=0, verbose_name=_('Quantity'))
+    total_amount = models.IntegerField(default=0, verbose_name=_('Quantity'))
+    product = models.ManyToManyField(OrderItem)
     city = models.CharField(max_length=80, verbose_name=_('City'), default=None, null=True)
     address = models.CharField(max_length=150, verbose_name=_('Address'), default=None, null=True)
     status = models.CharField(max_length=13, choices=OrderStatus.choices, default=OrderStatus.CART)
@@ -44,3 +44,15 @@ class Order(models.Model):
 
     def __str__(self):
         return f'{_("Order")} №{self.pk}'
+
+    @property
+    def total_price(self):
+        return sum(
+            [item.quantity * item.unit_price for item in self.orderitem_set.all()]
+        )
+
+    @property
+    def total_amount(self):
+        return sum(
+            [item.quantity for item in self.orderitem_set.all()]
+        )
