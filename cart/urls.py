@@ -1,17 +1,14 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import SimpleRouter
 
-from .views import (
-    AddCartItemView,
-    CartView,
-    RemoveCartItemView,
-    MakeOrderView,
-    OrdersView
-)
+from .views import OrderHistoryViewSet, CartViewSet
+
+orders = SimpleRouter()
+orders.register('', OrderHistoryViewSet, basename='orders')
+
+cart = SimpleRouter()
+cart.register('', CartViewSet, basename='cart')
 
 urlpatterns = [
-    path('', CartView.as_view(), name='cart_detail'),
-    path('add/<int:pk>/', AddCartItemView.as_view(), name='cart_add'),
-    path('remove/<int:pk>/', RemoveCartItemView.as_view(), name='cart_remove'),
-    path('make_order/', MakeOrderView.as_view(), name='make_order'),
-    path('orders/', OrdersView.as_view(), name='orders')
+    path('', include(orders.urls)),
 ]

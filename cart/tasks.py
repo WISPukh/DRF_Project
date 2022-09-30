@@ -6,14 +6,13 @@ from cart.models import Order
 
 
 @shared_task
-def order_created(order_id):
-    order = Order.objects.get(pk=order_id)
-
+def send_mail_of_order(order_pk):
+    order = Order.objects.get(pk=order_pk)
     return send_mail(
-        f'Order № {order_id}',
+        f'Order № {order.pk}',
         "Your order content is:\n"
         f"Price: {order.total_price}\n"
-        f"Total quantity: {order.quantity}",
+        f"Total quantity: {order.total_amount}",
         settings.EMAIL_HOST_USER,
         [order.customer_id.email]
     )

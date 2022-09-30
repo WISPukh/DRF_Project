@@ -1,11 +1,15 @@
 from django.contrib.contenttypes.models import ContentType
-from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
+from django.db.transaction import atomic
 from rest_framework.response import Response
+from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.viewsets import ModelViewSet
 
+from cart.models import Order
+from cart.serializers import CartSerializer, CartItemsSerializer
 from .models import Product
 from .serializers import ProductSerializer
 from .utils import generate_json_error_response, get_dynamic_serializer
+from cart.services import CartActionsService
 
 
 class ProductViewSet(ModelViewSet):
@@ -53,3 +57,17 @@ class ProductViewSet(ModelViewSet):
         self.perform_update(serializer)
 
         return Response(serializer.data)
+
+
+class AddToCartViewSet(ModelViewSet):
+    serializer_class = CartItemsSerializer
+
+    def get_queryset(self):
+        return Product.objects.filter(pk=self.kwargs['pk'])
+
+    def create(self, request, *args, **kwargs):
+        service = CartActionsService(
+            product=self.get_object(), user=request.user, request_data=request.data
+        )
+        order = service.add_product_to_cart()
+        return Response(CartSerializer(order).data)
