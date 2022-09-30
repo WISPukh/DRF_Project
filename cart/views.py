@@ -1,14 +1,12 @@
-from django.contrib import messages
-from django.db.transaction import atomic
+from django.http.response import HttpResponse
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
 
 from users.mixins import CheckUserIsOwnerMixin
+from .models import Order
+from .serializers import CartSerializer, OrderSerializer
 from .services import CartActionsService
-from .models import OrderItem, Order
-from .tasks import order_created
-from .serializers import OrderSerializer
 
 
 class OrderHistoryViewSet(CheckUserIsOwnerMixin, ModelViewSet):
@@ -26,14 +24,23 @@ class OrderHistoryViewSet(CheckUserIsOwnerMixin, ModelViewSet):
 
 
 class CartViewSet(ModelViewSet):
-    serializer_class = OrderSerializer
+    serializer_class = CartSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return Order.objects.filter(customer_id=self.request.user.pk, status='CART')
 
-    @atomic
+    def post(self, request, *args, **kwargs):
+        service = self.get_service()
+        order = service.make_order()
+        if isinstance(order, HttpResponse):
+            return order
+        return Response(CartSerializer(order).data)
+
     def partial_update(self, request, *args, **kwargs):
-        cart_actions_service = CartActionsService
-        order = cart_actions_service.change_products_in_cart(self, request)  # noqa
-        return Response(OrderSerializer(order).data)
+        service = self.get_service()
+        order = service.change_products_in_cart()
+        return Response(CartSerializer(order).data)
+
+    def get_service(self):
+        return CartActionsService(user=self.request.user, request_data=self.request.data, order=self.get_object())

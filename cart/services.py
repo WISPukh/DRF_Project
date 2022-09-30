@@ -1,23 +1,37 @@
-from shop.models import Product
-from .models import Order, OrderItem
 from django.db.models import F
+from django.db.transaction import atomic
+
+from shop.models import Product
+from shop.utils import generate_json_error_response
+from .models import Order, OrderItem
+from .tasks import send_mail_of_order
+
+
+class OrderAmountExceededError(Exception):
+    pass
 
 
 class CartActionsService:
-    def add_product_to_cart(self, request):
-        product = self.get_object()  # noqa
-        user_pk = request.user.pk
-        quantity = int(request.data['quantity'])
+    def __init__(self, user, request_data, product=None, order=None):
+        self.product = product
+        self.order = order
+        self.user = user
+        self.request_data = request_data
+
+    @atomic
+    def add_product_to_cart(self):
+        quantity = int(self.request_data.get('quantity'))
 
         order, is_order_created = Order.objects.get_or_create(
-            customer_id_id=user_pk,
+            customer_id_id=self.user.pk,
             status='CART'
         )
 
         snapshot_item, is_snapshot_created = OrderItem.objects.get_or_create(
-            customer_id_id=user_pk,
-            unit_price=product.price,
-            product_id=product,
+            customer_id_id=self.user.pk,
+            unit_price=self.product.price,
+            product_name=self.product.name,
+            product_id=self.product,
             order_id=order
         )
         order.product.add(snapshot_item)
@@ -32,11 +46,10 @@ class CartActionsService:
         order.refresh_from_db()
         return order
 
-    def change_products_in_cart(self, request):
-        order = self.get_object()  # noqa
-
-        products_in_db = order.product.through.objects.all()
-        products_in_request = request.data['product']
+    @atomic
+    def change_products_in_cart(self):
+        products_in_db = self.order.product.through.objects.all()
+        products_in_request = self.request_data.get('cart')
 
         # making sets
         pk_products_in_db = {item.orderitem.product_id_id for item in products_in_db}
@@ -87,12 +100,39 @@ class CartActionsService:
         # unfortunately, bulk_create is not possible for m2m
         for product in products_to_add_to_cart:
             item = OrderItem.objects.create(
-                order_id=order,
+                order_id=self.order,
                 unit_price=product.price,
                 product_id=product,
                 product_name=product.name,
                 quantity=quantity_data_to_add[product.pk],
-                customer_id_id=request.user.pk
+                customer_id_id=self.user.pk
             )
-            order.product.add(item)
-        return order
+            self.order.product.add(item)
+        return self.order
+
+    @atomic
+    def make_order(self):
+        city = self.request_data.get('city')
+        address = self.request_data.get('address')
+        if not (city and address):
+            return generate_json_error_response(message='You can not make an order without city or address')
+
+        products_in_cart = self.order.orderitem_set.all()
+        pks_products_in_cart = {product.product_id_id for product in products_in_cart}
+        products_from_stock = Product.objects.filter(pk__in=pks_products_in_cart)
+
+        try:
+            for index, item in enumerate(products_from_stock):
+                if item.in_stock < products_in_cart[index].quantity or 1 > products_in_cart[index].quantity:
+                    raise OrderAmountExceededError
+        except OrderAmountExceededError:
+            return generate_json_error_response(message='You can not order more than there is in stock')
+
+        self.order.city = city
+        self.order.address = address
+        self.order.total_price = self.order.calculated_total_price
+        self.order.total_amount = self.order.calculated_total_amount
+        self.order.status = 'CREATED'
+        self.order.save()
+        send_mail_of_order.delay(self.order.pk)
+        return self.order

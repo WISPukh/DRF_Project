@@ -46,13 +46,17 @@ class Order(models.Model):
         return f'{_("Order")} №{self.pk}'
 
     @property
-    def total_price(self):
-        return sum(
-            [item.quantity * item.unit_price for item in self.orderitem_set.all()]
-        )
+    def calculated_total_price(self):
+        if self.status == 'CART':
+            return sum(
+                [item.quantity * item.unit_price for item in self.orderitem_set.all()]
+            )
+        return self.total_price
 
     @property
-    def total_amount(self):
-        return sum(
-            [item.quantity for item in self.orderitem_set.all()]
-        )
+    def calculated_total_amount(self):
+        if self.status == 'CART':
+            return sum(
+                [item.quantity for item in self.orderitem_set.all()]
+            )
+        return self.total_amount
