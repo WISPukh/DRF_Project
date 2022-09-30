@@ -73,41 +73,43 @@ class CartActionsService:
 
         to_update = dict()
         for key, value in quantity_data_in_request.items():
-            if value == quantity_data_in_db[key]:
-                continue
-            to_update[key] = value
-
-        quantity_data_to_add = {
-            product['product_id']: product['quantity']
-            for product in products_in_request
-            if product['product_id'] in to_add
-        }
+            if value != quantity_data_in_db[key]:
+                to_update[key] = value
 
         # update database's info
-        products_to_update = OrderItem.objects.filter(
-            product_id__in=to_update.keys()
-        )
-        for product in products_to_update:
-            product.quantity = to_update[product.product_id_id]
-        OrderItem.objects.bulk_update(products_to_update, ['quantity'])
+        if to_update:
+            products_to_update = OrderItem.objects.filter(
+                product_id__in=to_update.keys()
+            )
+            for product in products_to_update:
+                product.quantity = to_update[product.product_id_id]
+            OrderItem.objects.bulk_update(products_to_update, ['quantity'])
 
         # delete products
-        OrderItem.objects.filter(product_id__in=to_delete).delete()
+        if to_delete:
+            OrderItem.objects.filter(product_id__in=to_delete).delete()
 
         # add products
-        products_to_add_to_cart = Product.objects.filter(pk__in=to_add)
+        if to_add:
+            products_to_add_to_cart = Product.objects.filter(pk__in=to_add)
 
-        # unfortunately, bulk_create is not possible for m2m
-        for product in products_to_add_to_cart:
-            item = OrderItem.objects.create(
-                order_id=self.order,
-                unit_price=product.price,
-                product_id=product,
-                product_name=product.name,
-                quantity=quantity_data_to_add[product.pk],
-                customer_id_id=self.user.pk
-            )
-            self.order.product.add(item)
+            quantity_data_to_add = {
+                product['product_id']: product['quantity']
+                for product in products_in_request
+                if product['product_id'] in to_add
+            }
+
+            # unfortunately, bulk_create is not possible for m2m
+            for product in products_to_add_to_cart:
+                item = OrderItem.objects.create(
+                    order_id=self.order,
+                    unit_price=product.price,
+                    product_id=product,
+                    product_name=product.name,
+                    quantity=quantity_data_to_add[product.pk],
+                    customer_id_id=self.user.pk
+                )
+                self.order.product.add(item)
         return self.order
 
     @atomic
@@ -121,12 +123,9 @@ class CartActionsService:
         pks_products_in_cart = {product.product_id_id for product in products_in_cart}
         products_from_stock = Product.objects.filter(pk__in=pks_products_in_cart)
 
-        try:
-            for index, item in enumerate(products_from_stock):
-                if item.in_stock < products_in_cart[index].quantity or 1 > products_in_cart[index].quantity:
-                    raise OrderAmountExceededError
-        except OrderAmountExceededError:
-            return generate_json_error_response(message='You can not order more than there is in stock')
+        for index, item in enumerate(products_from_stock):
+            if item.in_stock < products_in_cart[index].quantity or 1 > products_in_cart[index].quantity:
+                return generate_json_error_response(message='incorrect amount of products in cart')
 
         self.order.city = city
         self.order.address = address
