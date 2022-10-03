@@ -1,5 +1,4 @@
 from django.http.response import HttpResponse
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -11,7 +10,7 @@ from .services import CartActionsService
 
 class OrderHistoryViewSet(CheckUserIsOwnerMixin, ModelViewSet):
     serializer_class = OrderSerializer
-    permission_classes = (IsAuthenticated,)
+    http_method_names = ("GET",)
 
     def get_queryset(self):
         self.queryset = Order.objects.filter(customer_id=self.request.user.pk, status__in=[
@@ -25,7 +24,6 @@ class OrderHistoryViewSet(CheckUserIsOwnerMixin, ModelViewSet):
 
 class CartViewSet(ModelViewSet):
     serializer_class = CartSerializer
-    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return Order.objects.filter(customer_id=self.request.user.pk, status='CART')

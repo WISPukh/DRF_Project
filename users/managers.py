@@ -1,4 +1,5 @@
 from django.contrib.auth.models import UserManager as BaseUserManager
+from django.contrib.auth.models import Group
 
 
 class UserManager(BaseUserManager):
@@ -7,6 +8,10 @@ class UserManager(BaseUserManager):
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
+
+        user_group = Group.objects.get(name='Customer')
+        if not user.is_superuser:
+            user.groups.add(user_group.pk)
         return user
 
     def create_superuser(self, email=None, password=None, **extra_fields):
