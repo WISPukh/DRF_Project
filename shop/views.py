@@ -1,15 +1,15 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db.transaction import atomic
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST, HTTP_201_CREATED
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.viewsets import ModelViewSet
 
-from cart.models import Order
 from cart.serializers import CartSerializer, CartItemsSerializer
+from cart.services import CartActionsService
 from .models import Product
 from .serializers import ProductSerializer
 from .utils import generate_json_error_response, get_dynamic_serializer
-from cart.services import CartActionsService
 
 
 class ProductViewSet(ModelViewSet):
@@ -33,10 +33,8 @@ class ProductViewSet(ModelViewSet):
         instance = dynamic_model.objects.get(pk=kwargs.get('pk'))
         return Response(dynamic_serializer(instance).data)
 
+    @atomic
     def create(self, request, *args, **kwargs):
-        if not request.user.is_superuser:
-            return generate_json_error_response(HTTP_403_FORBIDDEN, 'You have no access to this functionality')
-
         model = ContentType.objects.get(pk=request.data.get('content_type')).model_class()
         dynamic_serializer = get_dynamic_serializer(model)
 
@@ -47,6 +45,7 @@ class ProductViewSet(ModelViewSet):
 
         return Response(serializer.data, status=HTTP_201_CREATED, headers=headers)
 
+    @atomic
     def partial_update(self, request, *args, **kwargs):
         model = ContentType.objects.get(pk=self.get_object().content_type_id).model_class()
         dynamic_serializer = get_dynamic_serializer(model)
@@ -61,6 +60,7 @@ class ProductViewSet(ModelViewSet):
 
 class AddToCartViewSet(ModelViewSet):
     serializer_class = CartItemsSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return Product.objects.filter(pk=self.kwargs['pk'])

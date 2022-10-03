@@ -7,10 +7,6 @@ from .models import Order, OrderItem
 from .tasks import send_mail_of_order
 
 
-class OrderAmountExceededError(Exception):
-    pass
-
-
 class CartActionsService:
     def __init__(self, user, request_data, product=None, order=None):
         self.product = product
@@ -48,11 +44,11 @@ class CartActionsService:
 
     @atomic
     def change_products_in_cart(self):
-        products_in_db = self.order.product.through.objects.all()
+        products_in_db = self.order.orderitem_set.all()
         products_in_request = self.request_data.get('cart')
 
         # making sets
-        pk_products_in_db = {item.orderitem.product_id_id for item in products_in_db}
+        pk_products_in_db = {item.product_id_id for item in products_in_db}
         pk_in_request = {item['product_id'] for item in products_in_request}
         to_delete = pk_products_in_db.difference(pk_in_request)
         to_add = pk_in_request - to_delete - pk_products_in_db
@@ -60,9 +56,9 @@ class CartActionsService:
 
         # making dicts
         quantity_data_in_db = {
-            product.orderitem.product_id_id: product.orderitem.quantity
+            product.product_id_id: product.quantity
             for product in products_in_db
-            if product.orderitem.product_id_id in to_change
+            if product.product_id_id in to_change
         }
 
         quantity_data_in_request = {
