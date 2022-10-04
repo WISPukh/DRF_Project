@@ -42,6 +42,3 @@ urlpatterns = [
     path('api/orders/history/', include(orders.urls)),
     path('api/cart/', include(cart.urls)),
 ]
-
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-urlpatterns += static(settings.STATIC_URL)
