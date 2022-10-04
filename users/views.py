@@ -7,7 +7,7 @@ from .serializers import UserSerializer
 
 class UsersViewSet(ModelViewSet):
     serializer_class = UserSerializer
-    http_method_names = ("get", "patch")
+    http_method_names = ['get', 'patch', 'post']
 
     def get_queryset(self):
         if not self.request.user.is_superuser:

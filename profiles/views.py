@@ -8,6 +8,7 @@ from .serializers import ProfileSerializer
 class ProfileDetailViewSet(ModelViewSet):
     model = Profile
     serializer_class = ProfileSerializer
+    http_method_names = ['get', 'patch']
 
     def get_queryset(self):
         return self.model.objects.filter(user_id=self.kwargs.get('pk'))

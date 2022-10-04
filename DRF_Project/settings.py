@@ -1,7 +1,7 @@
 import os
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from datetime import datetime, timedelta
 from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
 
@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [
@@ -119,7 +120,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
@@ -153,7 +153,6 @@ LOGGING = {
     },
 }
 
-
 # Email sender
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
@@ -166,9 +165,6 @@ EMAIL_PORT = 465
 EMAIL_USE_SSL = True
 
 CART_SESSION_ID = 'cart'
-
-LOGIN_URL = '/account/login/'
-
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -209,4 +205,15 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
     'SLIDING_TOKEN_LIFETIME': timedelta(hours=8),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+}
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'KitchenAid_Swagger': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+        }
+    }
 }

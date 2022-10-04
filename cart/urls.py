@@ -1,12 +1,12 @@
 from django.urls import path, include
-from rest_framework.routers import SimpleRouter
+from rest_framework.routers import DefaultRouter
 
 from .views import OrderHistoryViewSet, CartViewSet
 
-orders = SimpleRouter()
+orders = DefaultRouter()
 orders.register('', OrderHistoryViewSet, basename='orders')
 
-cart = SimpleRouter()
+cart = DefaultRouter()
 cart.register('', CartViewSet, basename='cart')
 
 urlpatterns = [

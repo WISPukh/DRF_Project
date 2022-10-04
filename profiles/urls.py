@@ -1,11 +1,7 @@
 from django.urls import path, include
 from .views import ProfileDetailViewSet
-from rest_framework.routers import SimpleRouter
-
-
-router = SimpleRouter()
-router.register('', ProfileDetailViewSet, basename='profile_detail')
+from rest_framework.routers import DefaultRouter
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', ProfileDetailViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update'}))
 ]
