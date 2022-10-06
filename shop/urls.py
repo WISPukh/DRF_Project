@@ -12,5 +12,5 @@ make_order.register('', AddToCartViewSet, basename='add_to_cart')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('<int:pk>/order/', include(make_order.urls))
+    path('', include(make_order.urls))
 ]

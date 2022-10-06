@@ -1,11 +1,11 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
 from profiles.views import ProfileDetailViewSet
 from .views import UsersViewSet
 
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'', UsersViewSet, basename='users')
 router.register(r'', ProfileDetailViewSet, basename='profile_detail')
 

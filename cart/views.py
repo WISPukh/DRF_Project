@@ -24,11 +24,19 @@ class OrderHistoryViewSet(CheckUserIsOwnerMixin, ModelViewSet):
 
 class CartViewSet(ModelViewSet):
     serializer_class = CartSerializer
+    http_method_names = ['get', 'post', 'patch']
 
     def get_queryset(self):
         return Order.objects.filter(customer_id=self.request.user.pk, status='CART')
 
     def post(self, request, *args, **kwargs):
+        """
+        desc: creates an order from existing products in cart
+        :param request:
+        :param args:
+        :param kwargs:
+        :return: json: with your order
+        """
         service = self.get_service()
         order = service.make_order()
         if isinstance(order, HttpResponse):
