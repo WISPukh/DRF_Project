@@ -1,6 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db.transaction import atomic
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.viewsets import ModelViewSet
@@ -62,7 +61,6 @@ class ProductViewSet(ModelViewSet):
 
 class AddToCartViewSet(ModelViewSet):
     serializer_class = CartItemsSerializer
-    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return Product.objects.filter(pk=self.kwargs.get('pk'))

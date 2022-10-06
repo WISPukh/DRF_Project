@@ -1,7 +1,6 @@
 from django.http.response import HttpResponse
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.decorators import action
 
 from users.mixins import CheckUserIsOwnerMixin
 from .models import Order

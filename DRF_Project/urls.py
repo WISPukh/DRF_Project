@@ -14,16 +14,16 @@ from rest_framework_simplejwt.views import (
 from cart.urls import cart, orders
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="KitchenAid API",
-      default_version='v1',
-      description="YEAH GOD DAMN THAT **** WORKS",
-      terms_of_service="https://swagger.io/terms/",
-      contact=openapi.Contact(email="puhoff.ol@yandex.ru"),
-      license=openapi.License(name="MY DAMN LICENSE"),
-   ),
-   public=True,
-   permission_classes=[permissions.AllowAny],
+    openapi.Info(
+        title="KitchenAid API",
+        default_version='v1',
+        description="my beautiful domestic appliances",
+        terms_of_service="https://swagger.io/terms/",
+        contact=openapi.Contact(email="puhoff.ol@yandex.ru"),
+        license=openapi.License(name="absolutely working license"),
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny],
 )
 
 urlpatterns = [
