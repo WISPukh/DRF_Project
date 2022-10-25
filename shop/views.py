@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db.transaction import atomic
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_201_CREATED
 from rest_framework.viewsets import ModelViewSet
@@ -65,7 +66,7 @@ class AddToCartViewSet(ModelViewSet):
     def get_queryset(self):
         return Product.objects.filter(pk=self.kwargs.get('pk'))
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def add_to_cart(self, request, *args, **kwargs):
         service = CartActionsService(
             product=self.get_object(), user=request.user, request_data=request.data
