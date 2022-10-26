@@ -3,6 +3,7 @@ from unittest import TestCase
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
+from parameterized import parameterized
 
 from cart.models import Order
 from cart.services import CartActionsService
@@ -54,53 +55,27 @@ class CartUnitTest(TestCase):
         self.assertEqual(normal_order.city, payload['city'])
         self.assertEqual(normal_order.address, payload['address'])
 
+    @parameterized.expand([
+        ['', '', 1],
+        ['city', 'address', 88888],
+        ['city', 'address', -5]
+    ])
     @pytest.mark.django_db
-    def test_unfilled_order(self):
-        unfilled_payload = {
-            'city': '',
-            'address': ''
-        }
-
-        unfilled_service = CartActionsService(
-            user=self.user,
-            order=self.order,
-            request_data=unfilled_payload)
-        unfilled_order = unfilled_service.make_order()
-
-        self.assertEqual(unfilled_order.status_code, 400)
-        self.assertIsInstance(unfilled_order, HttpResponse)
-
-    @pytest.mark.django_db
-    def test_negative_values_order(self):
+    def test_incorrect_values_order(self, city, address, quantity):
         payload = {
-            'city': 'rnd',
-            'address': 'true and valid address'
+            'city': city,
+            'address': address
         }
-        negative_values_service = CartActionsService(
+
+        service = CartActionsService(
             user=self.user,
-            order=self.add_products(product_id=1, quantity=-5),
+            order=self.add_products(product_id=1, quantity=quantity),
             request_data=payload
         )
-        negative_order = negative_values_service.make_order()
+        order = service.make_order()
 
-        self.assertEqual(negative_order.status_code, 400)
-        self.assertIsInstance(negative_order, HttpResponse)
-
-    @pytest.mark.django_db
-    def test_incorrect_values_order(self):
-        payload = {
-            'city': 'rnd',
-            'address': 'true and valid address'
-        }
-        incorrect_values_service = CartActionsService(
-            user=self.user,
-            order=self.add_products(product_id=1, quantity=9999999),
-            request_data=payload
-        )
-        incorrect_order = incorrect_values_service.make_order()
-
-        self.assertEqual(incorrect_order.status_code, 400)
-        self.assertIsInstance(incorrect_order, HttpResponse)
+        self.assertEqual(order.status_code, 400)
+        self.assertIsInstance(order, HttpResponse)
 
     @pytest.mark.django_db
     def test_change_products_in_cart(self):

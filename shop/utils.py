@@ -1,6 +1,5 @@
 from json import dumps
 
-# from django.http.response import HttpResponse
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
