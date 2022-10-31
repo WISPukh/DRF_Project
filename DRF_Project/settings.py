@@ -5,9 +5,6 @@ from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
 
-dotenv_path = os.path.join(os.path.dirname(__file__), '../.env')
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,7 +12,9 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 DEBUG = bool(os.environ.get('DEBUG'))
 
-ALLOWED_HOSTS = []
+if not DEBUG:
+    ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(' ')
+
 
 INSTALLED_APPS = [
     # My Apps:
@@ -114,11 +113,9 @@ USE_TZ = False
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -138,10 +135,13 @@ LOGGING = {
         },
     },
     'handlers': {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': '/home/oleg/PycharmProjects/DRF_Project/debug.log',
+            'filename': 'logs/debug.log',
         },
     },
     'loggers': {
