@@ -12,9 +12,9 @@ class CartItemsSerializer(ModelSerializer):
 
 
 class CartSerializer(ModelSerializer):
-    cart = CartItemsSerializer(many=True, source='product')
-    total_price = IntegerField(source='calculated_total_price')
-    total_amount = IntegerField(source='calculated_total_amount')
+    cart = CartItemsSerializer(many=True, source='product', required=False)
+    total_price = IntegerField(source='calculated_total_price', required=False)
+    total_amount = IntegerField(source='calculated_total_amount', required=False)
 
     class Meta:
         model = Order

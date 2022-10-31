@@ -1,4 +1,5 @@
 from django.http.response import HttpResponse
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -10,7 +11,7 @@ from .services import CartActionsService
 
 class OrderHistoryViewSet(CheckUserIsOwnerMixin, ModelViewSet):
     serializer_class = OrderSerializer
-    http_method_names = ("GET",)
+    http_method_names = ['get']
 
     def get_queryset(self):
         self.queryset = Order.objects.filter(customer_id=self.request.user.pk, status__in=[
@@ -24,12 +25,13 @@ class OrderHistoryViewSet(CheckUserIsOwnerMixin, ModelViewSet):
 
 class CartViewSet(ModelViewSet):
     serializer_class = CartSerializer
+    permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post', 'patch']
 
     def get_queryset(self):
         return Order.objects.filter(customer_id=self.request.user.pk, status='CART')
 
-    def post(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         """
         desc: creates an order from existing products in cart
         :param request:
@@ -43,10 +45,13 @@ class CartViewSet(ModelViewSet):
             return order
         return Response(CartSerializer(order).data)
 
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
     def partial_update(self, request, *args, **kwargs):
         service = self.get_service()
         order = service.change_products_in_cart()
         return Response(CartSerializer(order).data)
 
     def get_service(self):
-        return CartActionsService(user=self.request.user, request_data=self.request.data, order=self.get_object())
+        return CartActionsService(user=self.request.user, request_data=self.request.data, order=self.get_queryset()[0])

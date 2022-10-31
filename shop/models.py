@@ -11,7 +11,7 @@ class Product(models.Model):
     description = models.CharField(blank=True, max_length=250, verbose_name=_('Description'))
     price = models.IntegerField(verbose_name=_('Price'))
     in_stock = models.IntegerField(verbose_name=_('In stock'))
-    img = models.ImageField(upload_to='uploads/')
+    img = models.ImageField(upload_to='uploads/', blank=True, null=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, default=50)
 
     class Meta:
