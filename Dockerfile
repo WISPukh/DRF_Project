@@ -9,11 +9,9 @@ COPY requirements.txt requirements.txt
 RUN apt-get update && \
     apt-get -y install gcc
 
-RUN python -m venv venv
-CMD ['source', 'venv/bin/activate']
-
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+    pip install -r requirements.txt \
+
 EXPOSE 8000
 
 COPY . /code/
