@@ -10,7 +10,7 @@ RUN apt-get update && \
     apt-get -y install gcc
 
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt \
+    pip install -r requirements.txt
 
 EXPOSE 8000
 
