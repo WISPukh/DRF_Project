@@ -6,7 +6,7 @@ services:
     container_name: db_shop
     image: postgres
     volumes:
-      - ./data/dev_postgres_data:/var/lib/postgresql/data/
+      - pg_data_dev:/var/lib/postgresql/data/
     env_file:
       - .env.dev
 
@@ -43,3 +43,6 @@ services:
       - db
       - drf_proj
       - redis
+
+volumes:
+  pg_data_dev: {}
